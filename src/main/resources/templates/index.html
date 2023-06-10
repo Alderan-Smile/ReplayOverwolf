@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Video Player</title>
+    <style>
+        body {
+            background-color: transparent;
+        }
+    </style>
+</head>
+<body>
+<video controls autoplay>
+    <source th:src="@{'/videos/' + ${latestVideo.name}}" type="video/mp4">
+</video>
+</body>
+</html>
