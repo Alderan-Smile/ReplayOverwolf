@@ -1,47 +1,48 @@
 # ############################################################################################################
 #  @author Oliver Consterla Araya                                                                            #
-#  @version 202369.19.20                                                                                     #
+#  @version 202369.21.58                                                                                     #
 #  @since 2023                                                                                               #
 # ############################################################################################################
-from controller.fileWatcher import *
+import os
 import time
+from flask import Flask, render_template
 from watchdog.observers import Observer
-from watchdog.events import PatternMatchingEventHandler
+from watchdog.events import FileSystemEventHandler
 
-pathCarpeta = "C:/Users/Admn/Videos/Overwolf/Outplayed/"
+path_carpeta = "C:/Users/Admn/Videos/Overwolf/Outplayed/"
+carpetas_ignoradas = ["CarpetaIgnorada1", "CarpetaIgnorada2"]
+server_port = 8000
+
+app = Flask(__name__)
+ultimo_video = None
+
+index_html_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "index.html")
+print("Ruta del archivo",index_html_path)
+
+class CustomEventHandler(FileSystemEventHandler):
+    def __init__(self):
+        super().__init__()
+
+    def on_modified(self, event):
+        global ultimo_video
+        if not event.is_directory and event.src_path.endswith(".mp4"):
+            directorio_actual = os.path.dirname(event.src_path)
+            if not any(ignorada in directorio_actual for ignorada in carpetas_ignoradas):
+                ultimo_video = event.src_path
+                print(f"Nuevo video modificado: {ultimo_video}")
+
+@app.route('/')
+def index():
+    return render_template(index_html_path, ultimo_video=ultimo_video)
 
 if __name__ == "__main__":
-    print("Inicia if main")
-    patterns = ["*.mp4"]
-    ignore_patterns = ["./temp-capture"]
-    ignore_directories = True
-    case_sensitive = True
-    my_event_handler = PatternMatchingEventHandler(patterns, ignore_patterns, ignore_directories, case_sensitive)
-    print("termina if main")
+    event_handler = CustomEventHandler()
+    observer = Observer()
+    observer.schedule(event_handler, path_carpeta, recursive=True)
+    observer.start()
+    print("Observando la carpeta...")
 
-def on_created(event):
-    print(f"hey, {event.src_path} has been created!")
-def on_deleted(event):
-    print(f"what the f**k! Someone deleted {event.src_path}!")
-def on_modified(event):
-    print(f"hey buddy, {event.src_path} has been modified")
-def on_moved(event):
-    print(f"ok ok ok, someone moved {event.src_path} to {event.dest_path}")
+    app.run(port=server_port)
 
-my_event_handler.on_created = on_created
-my_event_handler.on_deleted = on_deleted
-my_event_handler.on_modified = on_modified
-my_event_handler.on_moved = on_moved
-
-go_recursively = True
-my_observer = Observer()
-my_observer.schedule(my_event_handler, pathCarpeta, recursive=go_recursively)
-print("Termina definicion de observador")
-
-my_observer.start()
-try:
-    while True:
-        time.sleep(1)
-except KeyboardInterrupt:
-    my_observer.stop()
-    my_observer.join()
+    observer.stop()
+    observer.join()
