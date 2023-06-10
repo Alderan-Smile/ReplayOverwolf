@@ -2,7 +2,6 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Video Player</title>
     <style>
         body {
             background-color: transparent;
@@ -10,8 +9,33 @@
     </style>
 </head>
 <body>
-<video controls autoplay>
-    <source th:src="@{'/videos/' + ${latestVideo.name}}" type="video/mp4">
-</video>
+<video id="videoPlayer" controls autoplay></video>
+
+<script>
+        // Obtiene la referencia al elemento de video
+        const videoPlayer = document.getElementById('videoPlayer');
+
+        // Función para actualizar el video mostrado
+        function updateVideo(videoUrl) {
+            videoPlayer.src = videoUrl;
+        }
+
+        // Función para actualizar automáticamente el video cada X segundos
+        function autoUpdateVideo() {
+            // Hacer una llamada AJAX o WebSocket para obtener la URL del último video modificado o creado
+            // y llamar a la función 'updateVideo' con la URL obtenida
+
+            // Ejemplo de uso con una llamada de ejemplo usando fetch:
+            fetch('/api/latestVideoUrl')
+                .then(response => response.text())
+                .then(videoUrl => updateVideo(videoUrl));
+
+            // Establecer el intervalo de actualización en 5 segundos (5000 milisegundos)
+            setTimeout(autoUpdateVideo, 5000);
+        }
+
+        // Iniciar la actualización automática del video
+        autoUpdateVideo();
+    </script>
 </body>
 </html>
